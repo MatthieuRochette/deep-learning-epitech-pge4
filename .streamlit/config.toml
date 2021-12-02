@@ -4,4 +4,4 @@ backgroundColor="#181e27"
 secondaryBackgroundColor="#31323d"
 
 [server]
-runOnSave=true
+runOnSave=false
