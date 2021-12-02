@@ -12,115 +12,108 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow import keras
+from sys import version_info
+print(version_info)
 
+# Load the data set
 fashion_mnist = tf.keras.datasets.fashion_mnist
 
 (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
 
-class_names = [
-    "T-shirt/top",
-    "Trouser",
-    "Pullover",
-    "Dress",
-    "Coat",
-    "Sandal",
-    "Shirt",
-    "Sneaker",
-    "Bag",
-    "Ankle boot",
-]
+class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
+               'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
 
+# turn the gray scale into float entrer 0 to 1
 train_images = train_images / 255.0
 
 test_images = test_images / 255.0
 
+# Creation of model 
+
 model = keras.models.Sequential()
 
-model.add(keras.layers.Input((28, 28, 1)))
+model.add(keras.layers.Input((28,28,1)))
 
-model.add(keras.layers.Conv2D(32, (3, 3), activation="relu"))
-model.add(keras.layers.MaxPooling2D((2, 2)))
+# We add one layer for convolution with 32 filters
+model.add(keras.layers.Conv2D(32, (3,3),  activation='relu'))
+
+# We add pooling layer
+model.add(keras.layers.MaxPooling2D((2,2)))
+
+# We add Dropout layer for reset the state for neral
 model.add(keras.layers.Dropout(0.2))
 
 model.add(keras.layers.Flatten())
-model.add(keras.layers.Dense(128, activation="relu"))
+# We add one layer of normal network layer
+model.add(keras.layers.Dense(128, activation='relu'))
 model.add(keras.layers.Dropout(0.5))
 
-
-model.add(keras.layers.Dense(10, activation="softmax"))
+# And for finish we add a final layer of final clasification
+model.add(keras.layers.Dense(10, activation='softmax'))
 
 model.summary()
 
-model.compile(
-    optimizer="adam",
-    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-    metrics=["accuracy"],
-)
+# compile the model with adam optimizer for reduse the lost teste
 
+model.compile(optimizer='adam',
+              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+              metrics=['accuracy'])
+
+# train the model with 20 epochs with the train dataset
 model.fit(train_images, train_labels, epochs=20)
 
 score = model.evaluate(test_images, test_labels, verbose=0)
 
-print(f"Test loss     : {score[0]:4.4f}")
-print(f"Test accuracy : {score[1]:4.4f}")
-
+print(f'Test loss     : {score[0]:4.4f}')
+print(f'Test accuracy : {score[1]:4.4f}')
 
 def plot_image(i, predictions_array, true_label, img):
-    true_label, img = true_label[i], img[i]
-    plt.grid(False)
-    plt.xticks([])
-    plt.yticks([])
+  true_label, img = true_label[i], img[i]
+  plt.grid(False)
+  plt.xticks([])
+  plt.yticks([])
 
-    plt.imshow(img, cmap=plt.cm.binary)
+  plt.imshow(img, cmap=plt.cm.binary)
 
-    predicted_label = np.argmax(predictions_array)
-    if predicted_label == true_label:
-        color = "blue"
-    else:
-        color = "red"
+  predicted_label = np.argmax(predictions_array)
+  if predicted_label == true_label:
+    color = 'blue'
+  else:
+    color = 'red'
 
-    plt.xlabel(
-        "{} {:2.0f}% ({})".format(
-            class_names[predicted_label],
-            100 * np.max(predictions_array),
-            class_names[true_label],
-        ),
-        color=color,
-    )
-
+  plt.xlabel("{} {:2.0f}% ({})".format(class_names[predicted_label],
+                                100*np.max(predictions_array),
+                                class_names[true_label]),
+                                color=color)
 
 def plot_value_array(i, predictions_array, true_label):
-    true_label = true_label[i]
-    plt.grid(False)
-    plt.xticks(range(10))
-    plt.yticks([])
-    thisplot = plt.bar(range(10), predictions_array, color="#777777")
-    plt.ylim([0, 1])
-    predicted_label = np.argmax(predictions_array)
+  true_label = true_label[i]
+  plt.grid(False)
+  plt.xticks(range(10))
+  plt.yticks([])
+  thisplot = plt.bar(range(10), predictions_array, color="#777777")
+  plt.ylim([0, 1])
+  predicted_label = np.argmax(predictions_array)
 
-    thisplot[predicted_label].set_color("red")
-    thisplot[true_label].set_color("blue")
+  thisplot[predicted_label].set_color('red')
+  thisplot[true_label].set_color('blue')
 
+probability_model = tf.keras.Sequential([model, 
+                                         tf.keras.layers.Softmax()])
 
-probability_model = tf.keras.Sequential([model, tf.keras.layers.Softmax()])
-
-predictions = probability_model.predict(test_images)
+if __name__ == "__main__":
+  predictions = probability_model.predict(test_images)
 
 # Plot the first X test images, their predicted labels, and the true labels.
-# Color correct predictions in blue and incorrect predictions in red.
-num_rows = 10
-num_cols = 3
-num_images = num_rows * num_cols
-plt.figure(figsize=(2 * 2 * num_cols, 2 * num_rows))
-for i in range(num_images):
-    plt.subplot(num_rows, 2 * num_cols, 2 * i + 1)
+  # Color correct predictions in blue and incorrect predictions in red.
+  num_rows = 10
+  num_cols = 3
+  num_images = num_rows*num_cols
+  plt.figure(figsize=(2*2*num_cols, 2*num_rows))
+  for i in range(num_images):
+    plt.subplot(num_rows, 2*num_cols, 2*i+1)
     plot_image(i, predictions[i], test_labels, test_images)
-    plt.subplot(num_rows, 2 * num_cols, 2 * i + 2)
+    plt.subplot(num_rows, 2*num_cols, 2*i+2)
     plot_value_array(i, predictions[i], test_labels)
-plt.tight_layout()
-plt.show()
-
-"""<a style='text-decoration:none;line-height:16px;display:flex;color:#5B5B62;padding:10px;justify-content:end;' href='https://deepnote.com?utm_source=created-in-deepnote-cell&projectId=703f74d8-e758-4cde-bc81-ed4be2de8bf0' target="_blank">
-<img alt='Created in deepnote.com' style='display:inline;max-height:16px;margin:0px;margin-right:7.5px;' src='data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iODBweCIgaGVpZ2h0PSI4MHB4IiB2aWV3Qm94PSIwIDAgODAgODAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDU0LjEgKDc2NDkwKSAtIGh0dHBzOi8vc2tldGNoYXBwLmNvbSAtLT4KICAgIDx0aXRsZT5Hcm91cCAzPC90aXRsZT4KICAgIDxkZXNjPkNyZWF0ZWQgd2l0aCBTa2V0Y2guPC9kZXNjPgogICAgPGcgaWQ9IkxhbmRpbmciIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJBcnRib2FyZCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEyMzUuMDAwMDAwLCAtNzkuMDAwMDAwKSI+CiAgICAgICAgICAgIDxnIGlkPSJHcm91cC0zIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMjM1LjAwMDAwMCwgNzkuMDAwMDAwKSI+CiAgICAgICAgICAgICAgICA8cG9seWdvbiBpZD0iUGF0aC0yMCIgZmlsbD0iIzAyNjVCNCIgcG9pbnRzPSIyLjM3NjIzNzYyIDgwIDM4LjA0NzY2NjcgODAgNTcuODIxNzgyMiA3My44MDU3NTkyIDU3LjgyMTc4MjIgMzIuNzU5MjczOSAzOS4xNDAyMjc4IDMxLjY4MzE2ODMiPjwvcG9seWdvbj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0zNS4wMDc3MTgsODAgQzQyLjkwNjIwMDcsNzYuNDU0OTM1OCA0Ny41NjQ5MTY3LDcxLjU0MjI2NzEgNDguOTgzODY2LDY1LjI2MTk5MzkgQzUxLjExMjI4OTksNTUuODQxNTg0MiA0MS42NzcxNzk1LDQ5LjIxMjIyODQgMjUuNjIzOTg0Niw0OS4yMTIyMjg0IEMyNS40ODQ5Mjg5LDQ5LjEyNjg0NDggMjkuODI2MTI5Niw0My4yODM4MjQ4IDM4LjY0NzU4NjksMzEuNjgzMTY4MyBMNzIuODcxMjg3MSwzMi41NTQ0MjUgTDY1LjI4MDk3Myw2Ny42NzYzNDIxIEw1MS4xMTIyODk5LDc3LjM3NjE0NCBMMzUuMDA3NzE4LDgwIFoiIGlkPSJQYXRoLTIyIiBmaWxsPSIjMDAyODY4Ij48L3BhdGg+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwzNy43MzA0NDA1IEwyNy4xMTQ1MzcsMC4yNTcxMTE0MzYgQzYyLjM3MTUxMjMsLTEuOTkwNzE3MDEgODAsMTAuNTAwMzkyNyA4MCwzNy43MzA0NDA1IEM4MCw2NC45NjA0ODgyIDY0Ljc3NjUwMzgsNzkuMDUwMzQxNCAzNC4zMjk1MTEzLDgwIEM0Ny4wNTUzNDg5LDc3LjU2NzA4MDggNTMuNDE4MjY3Nyw3MC4zMTM2MTAzIDUzLjQxODI2NzcsNTguMjM5NTg4NSBDNTMuNDE4MjY3Nyw0MC4xMjg1NTU3IDM2LjMwMzk1NDQsMzcuNzMwNDQwNSAyNS4yMjc0MTcsMzcuNzMwNDQwNSBDMTcuODQzMDU4NiwzNy43MzA0NDA1IDkuNDMzOTE5NjYsMzcuNzMwNDQwNSAwLDM3LjczMDQ0MDUgWiIgaWQ9IlBhdGgtMTkiIGZpbGw9IiMzNzkzRUYiPjwvcGF0aD4KICAgICAgICAgICAgPC9nPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+' > </img>
-Created in <span style='font-weight:600;margin-left:4px;'>Deepnote</span></a>
-"""
+  plt.tight_layout()
+  plt.show()
