@@ -19,6 +19,13 @@ In the first case, this might take a long time. Sorry for the inconvenience."""
 
 # model initialisation
 # =============================================================================
+def try_load_model(path: str = DEFAULT_MODEL_SAVE_PATH):
+    if os.path.isdir(path):
+        model = keras.models.load_model(path)
+        return model
+    return None
+
+
 def load_or_create_model(path: str = DEFAULT_MODEL_SAVE_PATH):
     model = try_load_model()
     if model is None:
