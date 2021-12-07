@@ -1,5 +1,8 @@
 import os
+import io
+from PIL import Image, ImageOps
 
+import numpy as np
 import streamlit as st
 from tensorflow import keras
 
@@ -59,6 +62,33 @@ uploaded = st.file_uploader(
 # =============================================================================
 if uploaded:
     converted_images = []
-    for image in uploaded:
-        print(image)
-    # predictions = probability_model.predict(images_from_uploader)
+    images_names = []
+    images = []
+    for file in uploaded:
+        image = Image.open(io.BytesIO(file.getvalue()))
+        images.append(image)
+        if image.size[0] != 28 or image.size[1] != 28:
+            image = image.resize((28, 28))
+        image_grayscale = ImageOps.grayscale(image)
+
+        images_names.append(file.name)
+
+        pixels = list(image_grayscale.getdata())
+        pixels_matrix = [[*pixels[i : i + 28]] for i in range(0, 28)]
+        pixels_np_arr = np.array([np.array(pix_line) for pix_line in pixels_matrix])
+
+        converted_images.append(pixels_np_arr)
+
+    converted_images_array = np.array(converted_images)
+    predictions = probability_model.predict(converted_images_array)
+
+    print(len(predictions))
+    for i in range(len(images_names)):
+        img_predictions_array = predictions[i]
+        predicted_label = np.argmax(img_predictions_array)
+        predicted_class = class_names[predicted_label]
+
+        with st.expander(images_names[i], expanded=True):
+            st.image(images[i])
+            st.caption(predicted_class)
+            print(images_names[i], predictions[i])
