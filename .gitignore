@@ -131,8 +131,5 @@ dmypy.json
 # Logs
 logs/
 
-# saved model
-saved_model/
-
 #saved checkpoints
 training_saves/
